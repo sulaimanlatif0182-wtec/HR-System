@@ -1,10 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Disable Turbopack to fix PostCSS issues on Vercel
-  experimental: {
-    turbo: false,
-  },
+  // No experimental config needed
 };
 
 export default nextConfig;
