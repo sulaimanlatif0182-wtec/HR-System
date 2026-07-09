@@ -27,7 +27,7 @@ export default function Login() {
     }, 600);
   };
 
-  // Real Login with Error Handling
+  // Real Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
