@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -9,41 +10,49 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Pre-fill form based on role (does NOT auto login)
-  const selectRole = (role: 'admin' | 'manager' | 'employee') => {
-    if (role === 'admin') {
-      setEmail('admin@hr.com');
-      setPassword('admin123');
-    } else if (role === 'manager') {
-      setEmail('manager@hr.com');
-      setPassword('manager123');
-    } else {
-      setEmail('employee@hr.com');
-      setPassword('employee123');
-    }
+  // Quick Demo Login
+  const quickLogin = (role: 'admin' | 'manager' | 'employee') => {
+    setLoading(true);
+
+    const users = {
+      admin: { name: "Sarah Chen", role: "admin", employeeId: 1 },
+      manager: { name: "James Wilson", role: "manager", employeeId: 2 },
+      employee: { name: "Aisha Patel", role: "employee", employeeId: 3 },
+    };
+
+    setTimeout(() => {
+      localStorage.setItem('user', JSON.stringify(users[role]));
+      router.push('/dashboard');
+      setLoading(false);
+    }, 600);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Real Login
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate login delay
-    setTimeout(() => {
-      let role = 'employee';
-      let name = 'Aisha Patel';
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (email.includes('admin')) {
-        role = 'admin';
-        name = 'Sarah Chen';
-      } else if (email.includes('manager')) {
-        role = 'manager';
-        name = 'James Wilson';
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        toast.success("Login successful!");
+        router.push('/dashboard');
+      } else {
+        toast.error(data.error || "Invalid email or password");
       }
-
-      localStorage.setItem('user', JSON.stringify({ name, role }));
-      router.push('/dashboard');
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -59,13 +68,14 @@ export default function Login() {
 
         <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm">
           
-          {/* Quick Role Buttons (Pre-fill only) */}
+          {/* Quick Demo Buttons */}
           <div className="mb-8">
             <p className="text-xs font-medium text-zinc-500 mb-3 text-center">QUICK DEMO ACCESS</p>
             <div className="grid grid-cols-3 gap-3">
               <button
-                onClick={() => selectRole('admin')}
-                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all"
+                onClick={() => quickLogin('admin')}
+                disabled={loading}
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all disabled:opacity-50"
               >
                 <div className="w-8 h-8 bg-zinc-900 rounded-xl flex items-center justify-center">
                   <span className="text-white text-sm font-bold">A</span>
@@ -77,8 +87,9 @@ export default function Login() {
               </button>
 
               <button
-                onClick={() => selectRole('manager')}
-                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all"
+                onClick={() => quickLogin('manager')}
+                disabled={loading}
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all disabled:opacity-50"
               >
                 <div className="w-8 h-8 bg-amber-600 rounded-xl flex items-center justify-center">
                   <span className="text-white text-sm font-bold">M</span>
@@ -90,8 +101,9 @@ export default function Login() {
               </button>
 
               <button
-                onClick={() => selectRole('employee')}
-                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all"
+                onClick={() => quickLogin('employee')}
+                disabled={loading}
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all disabled:opacity-50"
               >
                 <div className="w-8 h-8 bg-emerald-600 rounded-xl flex items-center justify-center">
                   <span className="text-white text-sm font-bold">E</span>
@@ -137,14 +149,6 @@ export default function Login() {
                 className="input w-full px-4 py-3 border border-zinc-300 rounded-2xl text-sm" 
                 placeholder="••••••••"
               />
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <input type="checkbox" className="rounded border-zinc-300" />
-                <span className="text-zinc-600">Remember me</span>
-              </div>
-              <a href="#" className="text-zinc-600 hover:text-zinc-900">Forgot password?</a>
             </div>
 
             <button 
